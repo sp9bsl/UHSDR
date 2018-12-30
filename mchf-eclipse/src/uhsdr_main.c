@@ -393,9 +393,15 @@ int mchfMain(void)
 
 	profileTimedEventInit();
 
+
+#ifdef USE_OSC_DDC
+	if(!DDCboard_IsPresent())
+#endif
+	{
 #ifdef USE_HMC1023
     hmc1023_init();
 #endif
+	}
 
     // Audio Software Init
     AudioDriver_Init();

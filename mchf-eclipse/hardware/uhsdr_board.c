@@ -35,6 +35,7 @@
 
 #include "uhsdr_keypad.h"
 #include "osc_si5351a.h"
+#include "osc_FPGA_DDC.h"
 
 // Transceiver state public structure
 __IO __MCHF_SPECIALMEM TransceiverState ts;
@@ -247,7 +248,13 @@ void Board_InitMinimal()
     UiLcdHy28_Init();
 
     // we determine and set the correct RF board here
-    ts.rf_board = Si5351a_IsPresent()?FOUND_RF_BOARD_OVI40:FOUND_RF_BOARD_MCHF;
+    //ts.rf_board = Si5351a_IsPresent()?FOUND_RF_BOARD_OVI40:FOUND_RF_BOARD_MCHF;
+    if(DDCboard_IsPresent())
+    	ts.rf_board=FOUND_RF_BOARD_DDC;
+    else if(Si5351a_IsPresent())
+    	ts.rf_board=FOUND_RF_BOARD_OVI40;
+    else
+    	ts.rf_board=FOUND_RF_BOARD_MCHF;
 
 }
 

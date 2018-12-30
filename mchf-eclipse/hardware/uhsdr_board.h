@@ -24,6 +24,7 @@
 #include "ui_lcd_hy28.h"
 #include "ui_vkeybrd.h"
 #include "audio_driver.h"
+#include "osc_FPGA_DDC.h"
 
 struct mchf_waterfall
 {
@@ -76,6 +77,7 @@ typedef enum {
 typedef enum {
     FOUND_RF_BOARD_MCHF = 0,
     FOUND_RF_BOARD_OVI40 = 1,
+	FOUND_RF_BOARD_DDC = 2,
 } RfBoard_t;
 
 #define CW_KEYER_MODE_IAM_B				0

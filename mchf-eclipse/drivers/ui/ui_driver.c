@@ -2353,6 +2353,14 @@ void UiDriver_InitBandSet()
         band_enabled[BAND_MODE_70] = false;
         */
         break;
+    case FOUND_RF_BOARD_DDC:
+        vfo[VFO_A].enabled[BAND_MODE_70] = false;
+        vfo[VFO_B].enabled[BAND_MODE_70] = false;
+        vfo[VFO_A].enabled[BAND_MODE_23] = false;
+        vfo[VFO_B].enabled[BAND_MODE_23] = false;
+        vfo[VFO_A].enabled[BAND_MODE_23] = false;
+        vfo[VFO_B].enabled[BAND_MODE_23] = false;
+        break;
     }
 
 	const char* test = Board_BootloaderVersion();
@@ -6051,7 +6059,7 @@ void UiDriver_StartUpScreenFinish()
 	    }
 	}
 
-	if(!Si5351a_IsPresent()) {
+	if(!(Si5351a_IsPresent() || DDCboard_IsPresent())) {
 	  UiDriver_StartupScreen_LogIfProblem((HAL_ADC_GetValue(&hadc2) > MAX_VSWR_MOD_VALUE) && (HAL_ADC_GetValue(&hadc3) > MAX_VSWR_MOD_VALUE),
 			"SWR Bridge resistor mod NOT completed!");
 	}

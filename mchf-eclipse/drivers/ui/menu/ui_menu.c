@@ -557,6 +557,9 @@ const char* UiMenu_GetSystemInfo(uint32_t* m_clr_ptr, int info_item)
         case FOUND_RF_BOARD_OVI40:
             outs = "OVI40 RF Board";
             break;
+        case FOUND_RF_BOARD_DDC:
+        	outs = "DDC RF Board";
+        	break;
         default:
             outs = "mcHF RF Board";
             break;
