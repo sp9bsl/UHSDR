@@ -6038,13 +6038,33 @@ void UiDriver_StartUpScreenFinish()
 
 	uint32_t hold_time;
 
+
 	bool osc_present_problem = osc->isPresent() == false;
 
 	UiDriver_StartupScreen_LogIfProblem(osc_present_problem, "Local Oscillator NOT Detected!");
 
-	if(!Si5351a_IsPresent() && RadioManagement_TcxoIsEnabled())
+	bool chk_TempSensor=true;
+	bool chk_SWRmod=true;
+#ifdef USE_OSC_SI5351A
+	if(Si5351a_IsPresent())
 	{
-		UiDriver_StartupScreen_LogIfProblem(lo.sensor_present == false, "MCP9801 Temp Sensor NOT Detected!");
+		chk_TempSensor=false;
+		chk_SWRmod=false;
+	}
+#endif
+
+#ifdef USE_OSC_DDC
+	if(DDCboard_IsPresent())
+	{
+		chk_TempSensor=false;
+		chk_SWRmod=false;
+	}
+#endif
+
+	if(chk_TempSensor) {
+        if(RadioManagement_TcxoIsEnabled()){
+            UiDriver_StartupScreen_LogIfProblem(lo.sensor_present == false, "MCP9801 Temp Sensor NOT Detected!");
+        }
 	}
 
 	if(ts.configstore_in_use == CONFIGSTORE_IN_USE_ERROR)                                   // problem with EEPROM init
@@ -6059,7 +6079,7 @@ void UiDriver_StartUpScreenFinish()
 	    }
 	}
 
-	if(!(Si5351a_IsPresent() || DDCboard_IsPresent())) {
+	if(chk_SWRmod) {
 	  UiDriver_StartupScreen_LogIfProblem((HAL_ADC_GetValue(&hadc2) > MAX_VSWR_MOD_VALUE) && (HAL_ADC_GetValue(&hadc3) > MAX_VSWR_MOD_VALUE),
 			"SWR Bridge resistor mod NOT completed!");
 	}

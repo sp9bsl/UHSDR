@@ -249,12 +249,15 @@ void Board_InitMinimal()
 
     // we determine and set the correct RF board here
     //ts.rf_board = Si5351a_IsPresent()?FOUND_RF_BOARD_OVI40:FOUND_RF_BOARD_MCHF;
-    if(DDCboard_IsPresent())
-    	ts.rf_board=FOUND_RF_BOARD_DDC;
-    else if(Si5351a_IsPresent())
+    if(Si5351a_IsPresent())
     	ts.rf_board=FOUND_RF_BOARD_OVI40;
     else
     	ts.rf_board=FOUND_RF_BOARD_MCHF;
+
+#ifdef USE_OSC_DDC
+    if(DDCboard_IsPresent())
+    	ts.rf_board=FOUND_RF_BOARD_DDC;
+#endif
 
 }
 

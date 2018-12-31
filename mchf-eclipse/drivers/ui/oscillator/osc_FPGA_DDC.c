@@ -12,8 +12,10 @@
  **  Author: 		Slawomir Balon/SP9BSL                                          **
  ************************************************************************************/
 #include "main.h"
-#include "stm32f7xx_hal.h"
 #include "uhsdr_board.h"
+#ifdef USE_OSC_DDC
+#include "stm32f7xx_hal.h"
+
 
 #include <math.h>
 #include "osc_FPGA_DDC.h"
@@ -349,6 +351,6 @@ void osc_FPGA_DDC_Init()
 	osc = DDCboard_IsPresent()?&osc_FPGA_DDC:NULL;
 
 }
-
+#endif
 
 
