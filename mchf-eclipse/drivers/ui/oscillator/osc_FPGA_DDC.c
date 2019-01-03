@@ -210,7 +210,7 @@ static void DDCboard_ConfigureSAI(void)
 	hsai_BlockA2.Init.MonoStereoMode = SAI_STEREOMODE;
 	hsai_BlockA2.Init.CompandingMode = SAI_NOCOMPANDING;
 	hsai_BlockA2.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-	if (HAL_SAI_InitProtocol(&hsai_BlockA2, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
+	if (HAL_SAI_InitProtocol(&hsai_BlockA2, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_32BIT, 2) != HAL_OK)
 	{
 	  Error_Handler();
 	}
@@ -226,7 +226,7 @@ static void DDCboard_ConfigureSAI(void)
 	hsai_BlockB2.Init.MonoStereoMode = SAI_STEREOMODE;
 	hsai_BlockB2.Init.CompandingMode = SAI_NOCOMPANDING;
 	hsai_BlockB2.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-	if (HAL_SAI_InitProtocol(&hsai_BlockB2, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
+	if (HAL_SAI_InitProtocol(&hsai_BlockB2, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_32BIT, 2) != HAL_OK)
 	{
 	  Error_Handler();
 	}
@@ -240,8 +240,8 @@ static void DDCboard_ConfigureSAI(void)
 	hdma_sai2_a.Init.Direction = DMA_PERIPH_TO_MEMORY;
 	hdma_sai2_a.Init.PeriphInc = DMA_PINC_DISABLE;
 	hdma_sai2_a.Init.MemInc = DMA_MINC_ENABLE;
-	hdma_sai2_a.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-	hdma_sai2_a.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+	hdma_sai2_a.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+	hdma_sai2_a.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
 	hdma_sai2_a.Init.Mode = DMA_CIRCULAR;
 	hdma_sai2_a.Init.Priority = DMA_PRIORITY_LOW;
 	hdma_sai2_a.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
@@ -258,8 +258,8 @@ static void DDCboard_ConfigureSAI(void)
 	hdma_sai2_b.Init.Direction = DMA_MEMORY_TO_PERIPH;
 	hdma_sai2_b.Init.PeriphInc = DMA_PINC_DISABLE;
 	hdma_sai2_b.Init.MemInc = DMA_MINC_ENABLE;
-	hdma_sai2_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-	hdma_sai2_a.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+	hdma_sai2_b.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+	hdma_sai2_a.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
 	hdma_sai2_b.Init.Mode = DMA_CIRCULAR;
 	hdma_sai2_b.Init.Priority = DMA_PRIORITY_LOW;
 	hdma_sai2_b.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
@@ -336,7 +336,6 @@ void osc_FPGA_DDC_Init()
 {
 	DDCboard.current_frequency = 0;
 	DDCboard.next_frequency = 0;
-
 
 	DDCboard.is_present = DDCboard_CheckPresence();
 

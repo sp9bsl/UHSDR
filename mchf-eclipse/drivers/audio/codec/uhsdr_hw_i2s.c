@@ -187,7 +187,6 @@ static void UhsdrHwI2s_SetBitWidth()
     UhsdrHWI2s_Sai32Bits(&hsai_BlockB2);
     #endif
 #endif
-
 #if defined(USE_32_AUDIO_BITS)
     #if defined(UI_BRD_OVI40)
     UhsdrHWI2s_Sai32Bits(&hsai_BlockA1);

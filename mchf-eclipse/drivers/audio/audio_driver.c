@@ -1504,6 +1504,30 @@ static void AudioDriver_RxProcessor_Bpsk(float32_t * const src, int16_t blockSiz
 #define FM_SQUELCH_HYSTERESIS   3           // Hysteresis for FM squelch
 #define FM_SQUELCH_PROC_DECIMATION  ((uint32_t)(1/FM_RX_SQL_SMOOTHING))     // Number of times we go through the FM demod algorithm before we do a squelch calculation
 
+<<<<<<< HEAD
+=======
+	    agc_wdsp.tau_attack = 0.001;               // tau_attack
+	    //    tau_decay = ts.agc_wdsp_conf.tau_decay / 1000.0; // 0.250;                // tau_decay
+	    agc_wdsp.n_tau = 4;                        // n_tau
+
+	    //    max_gain = 1000.0; // 1000.0; determines the AGC threshold = knee level
+	    //  max_gain is powf (10.0, (float32_t)ts.agc_wdsp_conf.thresh / 20.0);
+	    //    fixed_gain = ads.agc_rf_gain; //0.7; // if AGC == OFF, this gain is used
+	    agc_wdsp.max_input = (float32_t)ADC_CLIP_WARN_THRESHOLD16;
+	    //32767.0; // maximum value of 16-bit audio //  1.0; //
+	    agc_wdsp.out_targ = (float32_t)ADC_CLIP_WARN_THRESHOLD16;
+	    //12000.0; // target value of audio after AGC
+	    agc_wdsp.tau_fast_backaverage = 0.250;    // tau_fast_backaverage
+	    agc_wdsp.tau_fast_decay = 0.005;          // tau_fast_decay
+	    agc_wdsp.pop_ratio = 5.0;                 // pop_ratio
+	    //    hang_enable = 0;                 // hang_enable
+	    agc_wdsp.tau_hang_backmult = 0.500;       // tau_hang_backmult
+
+	    initialised = true;
+    }
+    //    var_gain = 32.0;  // slope of the AGC --> this is 10 * 10^(slope / 20) --> for 10dB slope, this is 30.0
+    agc_wdsp.var_gain = powf (10.0, (float32_t)ts.agc_wdsp_conf.slope / 20.0 / 10.0); // 10^(slope / 200)
+>>>>>>> DDC support. Change SAI to 24 bit (32bit left aligned) IQ data from FPGA.
 
 
 #define FM_TONE_DETECT_ALPHA    0.9                     // setting for IIR filtering of ratiometric result from frequency-differential tone detection

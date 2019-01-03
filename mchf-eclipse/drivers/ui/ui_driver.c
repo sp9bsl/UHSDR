@@ -6048,7 +6048,7 @@ void UiDriver_StartUpScreenFinish()
 #ifdef USE_OSC_SI5351A
 	if(Si5351a_IsPresent())
 	{
-		chk_TempSensor=false;
+		chk_TempSensor=RadioManagement_TcxoIsEnabled();
 		chk_SWRmod=false;
 	}
 #endif
@@ -6062,9 +6062,7 @@ void UiDriver_StartUpScreenFinish()
 #endif
 
 	if(chk_TempSensor) {
-        if(RadioManagement_TcxoIsEnabled()){
-            UiDriver_StartupScreen_LogIfProblem(lo.sensor_present == false, "MCP9801 Temp Sensor NOT Detected!");
-        }
+	    UiDriver_StartupScreen_LogIfProblem(lo.sensor_present == false, "MCP9801 Temp Sensor NOT Detected!");
 	}
 
 	if(ts.configstore_in_use == CONFIGSTORE_IN_USE_ERROR)                                   // problem with EEPROM init
