@@ -14,6 +14,7 @@
 
 #ifndef UI_OSCILLATOR_OSC_FPGA_DDC_H_
 #define UI_OSCILLATOR_OSC_FPGA_DDC_H_
+#define oscDDC_f_sample 122880000
 
 //TODO: move this structure from header file to source file!!
 typedef struct
@@ -24,8 +25,8 @@ typedef struct
 	uint32_t current_frequency;
 	uint32_t next_frequency;
 	float32_t ppm;
-
 	uint8_t RegConfig;
+	uint8_t Nyquist_Zone;       //number of Nyquist zone for current frequency
 
 }DDCboard_t;
 

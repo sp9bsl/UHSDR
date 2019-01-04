@@ -578,7 +578,19 @@ void AudioDriver_LeakyLmsNr (float32_t *in_buff, float32_t *out_buff, int buff_s
 static void AudioDriver_Dsp_Init(volatile dsp_params_t* dsp_p)
 {
 
+<<<<<<< HEAD
     dsp_p->active_toggle    = 0xff;                 // used to hold the button G2 "toggle" setting.
+=======
+    // CW module init
+    CwGen_Init();
+
+    RttyDecoder_Init();
+    PskDecoder_Init();
+
+    // Audio filter disabled
+    ts.dsp_inhibit = 1;
+    ads.af_disabled = 1;
+>>>>>>> Added support for receive in higher Nyquist zones.
 
     // Commented settings below are read from configuration store, no need to initialize them
     // dsp_p->active       = 0;                    // TRUE if DSP noise reduction is to be enabled
@@ -1513,9 +1525,9 @@ static void AudioDriver_RxProcessor_Bpsk(float32_t * const src, int16_t blockSiz
 	    //    max_gain = 1000.0; // 1000.0; determines the AGC threshold = knee level
 	    //  max_gain is powf (10.0, (float32_t)ts.agc_wdsp_conf.thresh / 20.0);
 	    //    fixed_gain = ads.agc_rf_gain; //0.7; // if AGC == OFF, this gain is used
-	    agc_wdsp.max_input = (float32_t)ADC_CLIP_WARN_THRESHOLD16;
+	    agc_wdsp.max_input = (float32_t)ADC_CLIP_WARN_THRESHOLD;
 	    //32767.0; // maximum value of 16-bit audio //  1.0; //
-	    agc_wdsp.out_targ = (float32_t)ADC_CLIP_WARN_THRESHOLD16;
+	    agc_wdsp.out_targ = (float32_t)ADC_CLIP_WARN_THRESHOLD;
 	    //12000.0; // target value of audio after AGC
 	    agc_wdsp.tau_fast_backaverage = 0.250;    // tau_fast_backaverage
 	    agc_wdsp.tau_fast_decay = 0.005;          // tau_fast_decay

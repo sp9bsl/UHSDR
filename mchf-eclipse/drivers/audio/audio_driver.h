@@ -78,8 +78,8 @@ typedef struct {
 #define IIR_RXAUDIO_NUM_STAGES_MAX	12 // we use a maximum stage number of 10 at the moment, so this is 12 just to be safe
 //
 #define CODEC_DEFAULT_GAIN		0x1F	// Gain of line input to start with
-#define ADC_CLIP_WARN_THRESHOLD16	4096	    // This is at least 12dB below the clipping threshold of the A/D converter itself (if using codec with 16 bit data)
-#define ADC_CLIP_WARN_THRESHOLD32   268435456   // This is at least 12dB below the clipping threshold of the A/D converter itself (if using codec with 24 bit data, left aligned)
+#define ADC_CLIP_WARN_THRESHOLD	4096	    // This is at least 12dB below the clipping threshold of the A/D converter itself (if using codec with 16 bit data)
+
 //
 //
 //
@@ -269,7 +269,6 @@ typedef struct AudioDriverState
     ulong snap_carrier_freq; // used for passing the estimated carrier freq in SNAP mode to the print routine in UI_Driver
     bool CW_signal; // if CW decoder is enabled and carrier snap is wanted, this indicates whenever a pulse is received
     // only in that case, the carrier frequency is estimated and the display refreshed
-    int32_t ADC_clip_warning_threshold;    //RX clipping threshold, for AGC of codec and indication by red bar of meter
 } AudioDriverState;
 
 void AudioManagement_CalcIQPhaseAdjust(uint32_t freq);

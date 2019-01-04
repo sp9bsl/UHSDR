@@ -34,6 +34,7 @@ extern DMA_HandleTypeDef hdma_sai2_b;
 #define DDCboard_REG_CTRL 1
 	#define DDCboard_REG_CTRL_SAIen 	0b00000001	//enable SAI outputs in FPGA
 	#define DDCboard_REG_CTRL_SAITEST 	0b00000010	//test pattern for receiver (FPGA transmits: L:0x12345678 R:0x90123456 on its SAI output)
+    #define DDCboard_REG_CTRL_RCV1revIQ 0b00000100  //exchange Receiver1 IQ (when working in even Nyquist Zone)
 
 #define DDCboard_REG_RXfreq 	2
 #define DDCboard_REG_TXfreq 	3
@@ -281,6 +282,23 @@ static void DDCboard_SetPPM(float32_t ppm)
 
 static Oscillator_ResultCodes_t DDCboard_PrepareNextFrequency(uint32_t freq, int temp_factor)
 {
+    //determining the Nyquist zone and set frequency to fit in 1st Nyquist zone
+
+    if(freq>=(oscDDC_f_sample))
+    {
+        freq-=oscDDC_f_sample;
+        DDCboard.Nyquist_Zone=3;
+    }
+    else if(freq>=(oscDDC_f_sample/2))
+    {
+        freq-=oscDDC_f_sample/2;
+        DDCboard.Nyquist_Zone=2;
+    }
+    else
+    {
+        DDCboard.Nyquist_Zone=1;
+    }
+
 	DDCboard.next_frequency=freq;
 	return OSC_OK;
 }
