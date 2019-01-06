@@ -308,6 +308,7 @@ static Oscillator_ResultCodes_t DDCboard_ChangeToNextFrequency()
 	Oscillator_ResultCodes_t retval = OSC_OK;
 
 	DDCboard_write(DDCboard_REG_RXfreq,DDCboard.next_frequency);
+	DDCboard_write(DDCboard_REG_TXfreq,DDCboard.next_frequency);
 
 	return retval;
 }
