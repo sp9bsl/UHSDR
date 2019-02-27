@@ -578,19 +578,7 @@ void AudioDriver_LeakyLmsNr (float32_t *in_buff, float32_t *out_buff, int buff_s
 static void AudioDriver_Dsp_Init(volatile dsp_params_t* dsp_p)
 {
 
-<<<<<<< HEAD
     dsp_p->active_toggle    = 0xff;                 // used to hold the button G2 "toggle" setting.
-=======
-    // CW module init
-    CwGen_Init();
-
-    RttyDecoder_Init();
-    PskDecoder_Init();
-
-    // Audio filter disabled
-    ts.dsp_inhibit = 1;
-    ads.af_disabled = 1;
->>>>>>> Added support for receive in higher Nyquist zones.
 
     // Commented settings below are read from configuration store, no need to initialize them
     // dsp_p->active       = 0;                    // TRUE if DSP noise reduction is to be enabled
