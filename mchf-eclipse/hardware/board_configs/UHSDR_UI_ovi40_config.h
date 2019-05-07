@@ -44,6 +44,7 @@
 
 #define USE_TWO_CHANNEL_AUDIO
 #define USE_HMC1023
+#define USE_OSC_DDC
 
 #if defined(STM32F7)
     #ifndef TRX_NAME

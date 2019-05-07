@@ -32,9 +32,17 @@ extern DMA_HandleTypeDef hdma_sai2_b;
 
 #define DDCboard_REG_STAT 0
 #define DDCboard_REG_CTRL 1
-	#define DDCboard_REG_CTRL_SAIen 	0b00000001	//enable SAI outputs in FPGA
-	#define DDCboard_REG_CTRL_SAITEST 	0b00000010	//test pattern for receiver (FPGA transmits: L:0x12345678 R:0x90123456 on its SAI output)
-    #define DDCboard_REG_CTRL_RCV1revIQ 0b00000100  //exchange Receiver1 IQ (when working in even Nyquist Zone)
+	#define DDCboard_REG_CTRL_SAIen 	(1<<0)	//enable SAI outputs in FPGA
+	#define DDCboard_REG_CTRL_SAITEST 	(1<<1)	//test pattern for receiver (FPGA transmits: L:0x12345678 R:0x90123456 on its SAI output)
+    #define DDCboard_REG_CTRL_RCV1revIQ (1<<2)  //exchange Receiver1 IQ (when working in even Nyquist Zone)
+    #define DDCboard_REG_CTRL_AMP1      (1<<3)  //20dB ADC amplifier on off signal
+    #define DDCboard_REG_CTRL_LNA       (1<<4)  //26dB 10m> LNA on off signal
+    #define DDCboard_REG_CTRL_RXANT     (1<<5)  //RX mux switch (0=IN#1, 1=IN#2)
+    #define DDCboard_REG_CTRL_TXANT     (1<<6)  //TX mux switch (0=OUT#1, 1=OUT#2)
+    #define DDCboard_REG_CTRL_ADCFLTRmsk (3<<7)
+        #define DDCboard_REG_CTRL_ADCFLTR_2mBPF (0<<7)  //RX/TX ADC filter mux,0 or 2=2m BPF, 1=4m BPF, 3=52MHz LPF
+        #define DDCboard_REG_CTRL_ADCFLTR_4mBPF (1<<7)  //RX/TX ADC filter mux,0 or 2=2m BPF, 1=4m BPF, 3=52MHz LPF
+        #define DDCboard_REG_CTRL_ADCFLTR_LPF   (3<<7)  //RX/TX ADC filter mux,0 or 2=2m BPF, 1=4m BPF, 3=52MHz LPF
 
 #define DDCboard_REG_RXfreq 	2
 #define DDCboard_REG_TXfreq 	3
@@ -357,6 +365,7 @@ void osc_FPGA_DDC_Init()
 	DDCboard.next_frequency = 0;
 
 	DDCboard.is_present = DDCboard_CheckPresence();
+	DDCboard.RegConfig=DDCboard_REG_CTRL_AMP1;
 
 	if (DDCboard.is_present)
 	{
@@ -365,6 +374,7 @@ void osc_FPGA_DDC_Init()
 		DDCboard_UpdateConfig(DDCboard_REG_CTRL_SAIen,ENABLE);
 
 	}
+
 
 	osc = DDCboard_IsPresent()?&osc_FPGA_DDC:NULL;
 
