@@ -2354,12 +2354,10 @@ void UiDriver_InitBandSet()
         */
         break;
     case FOUND_RF_BOARD_DDC:
-        vfo[VFO_A].enabled[BAND_MODE_70] = false;
-        vfo[VFO_B].enabled[BAND_MODE_70] = false;
-        vfo[VFO_A].enabled[BAND_MODE_23] = false;
-        vfo[VFO_B].enabled[BAND_MODE_23] = false;
-        vfo[VFO_A].enabled[BAND_MODE_23] = false;
-        vfo[VFO_B].enabled[BAND_MODE_23] = false;
+        /*
+        band_enabled[BAND_MODE_23] = false;
+        band_enabled[BAND_MODE_70] = false;
+        */
         break;
     }
 

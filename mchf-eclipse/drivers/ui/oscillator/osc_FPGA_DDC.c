@@ -14,7 +14,6 @@
 #include "main.h"
 #include "uhsdr_board.h"
 #ifdef USE_OSC_DDC
-#include "stm32f7xx_hal.h"
 
 
 #include <math.h>
