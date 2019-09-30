@@ -25,8 +25,10 @@ typedef struct
 	uint32_t current_frequency;
 	uint32_t next_frequency;
 	float32_t ppm;
-	uint8_t RegConfig;
+	uint32_t RegConfig;
 	uint8_t Nyquist_Zone;       //number of Nyquist zone for current frequency
+	uint32_t AntiAliasFilterSeting;
+	uint32_t prevAntiAliasFilterSeting;
 
 }DDCboard_t;
 
