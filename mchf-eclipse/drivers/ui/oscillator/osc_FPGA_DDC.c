@@ -43,6 +43,8 @@ extern DMA_HandleTypeDef hdma_sai2_b;
         #define DDCboard_REG_CTRL_ADCFLTR_4mBPF (1<<7)  //RX/TX ADC filter mux,0 or 2=2m BPF, 1=4m BPF, 3=52MHz LPF
         #define DDCboard_REG_CTRL_ADCFLTR_LPF   (0<<7)  //RX/TX ADC filter mux,0 or 2=2m BPF, 1=4m BPF, 3=52MHz LPF
 #define DDCboard_REG_CTRL_AdcRes (1<<9)
+#define DDCboard_REG_CTRL_RevDAC (1<<10)
+#define DDCboard_REG_CTRL_AttDAC (1<<11)    //shifts two bits down the aoutput amplitude (attenuate by 12dB for f<144MHz to compensate 3rd alias attenuation)
 #define DDCboard_REG_CTRL_LED2  (1<<15)
 
 #define DDCboard_REG_RXfreq 	2
@@ -52,6 +54,22 @@ extern DMA_HandleTypeDef hdma_sai2_b;
 
 #define DDCboard_RegPeriphSpi   16
 
+//ADS6145 SPI registers
+#define ADS6145_Reg_00 (0x00<<11)
+    #define ADS6145_Reg_00_CoarseGainEnable (1<<9)
+#define ADS6145_Reg_0a (0x0a<<11)
+    #define ADS6145_Reg_0a_TestPattern(x)  (x<<5)
+    #define ADS6145_Reg_0a_formatBinary  (0<<10)
+    #define ADS6145_Reg_0a_format2sCompl (1<<10)
+#define ADS6145_Reg_0b (0x0b<<11)
+    #define ADS6145_Reg_0b_CustomLow(x) ((x&0x1ff)<<2)
+#define ADS6145_Reg_0c (0x0c<<11)
+    #define ADS6145_Reg_0c_FineGain(x) ((x&7)<<8)
+    #define ADS6145_Reg_0c_CustomHigh(x) ((x>>9)&0x1f)
+
+//Attenuator SPI address
+#define Att_RX 2
+#define Att_TX 3
 
 DDCboard_t DDCboard;
 
@@ -382,9 +400,23 @@ static Oscillator_ResultCodes_t DDCboard_ChangeToNextFrequency()
 	    DDCboard.prevAntiAliasFilterSeting=DDCboard.AntiAliasFilterSeting;
 	    DDCboard.RegConfig&=~DDCboard_REG_CTRL_ADCFLTRmsk;
 	    if(DDCboard.Nyquist_Zone==2)
+	    {
 	        DDCboard.RegConfig|=DDCboard_REG_CTRL_RCV1revIQ;        //reversing the order of IQ data for even Nyquist zone (2nd)
+	    }
 	    else
+	    {
+
 	        DDCboard.RegConfig&=~DDCboard_REG_CTRL_RCV1revIQ;
+	    }
+
+	    if(DDCboard.Nyquist_Zone==3)
+	    {
+	        DDCboard.RegConfig&=~DDCboard_REG_CTRL_AttDAC;  //full power on dac for 2m (attenuation compensation for 3rd nyquist zone)
+	    }
+	    else
+        {
+            DDCboard.RegConfig|=DDCboard_REG_CTRL_AttDAC;   //setting attenuation for all other than 2m bands
+        }
 
 	    DDCboard_UpdateConfig(DDCboard.AntiAliasFilterSeting,ENABLE);
 	}
@@ -434,23 +466,6 @@ const OscillatorInterface_t osc_FPGA_DDC =
 		.getMaxFrequency = DDCboard_getMaxFrequency,
 };
 
-//ADS6145 SPI registers
-#define ADS6145_Reg_00 (0x00<<11)
-    #define ADS6145_Reg_00_CoarseGainEnable (1<<9)
-#define ADS6145_Reg_0a (0x0a<<11)
-    #define ADS6145_Reg_0a_TestPattern(x)  (x<<5)
-    #define ADS6145_Reg_0a_formatBinary  (0<<10)
-    #define ADS6145_Reg_0a_format2sCompl (1<<10)
-#define ADS6145_Reg_0b (0x0b<<11)
-    #define ADS6145_Reg_0b_CustomLow(x) ((x&0x1ff)<<2)
-#define ADS6145_Reg_0c (0x0c<<11)
-    #define ADS6145_Reg_0c_FineGain(x) ((x&7)<<8)
-    #define ADS6145_Reg_0c_CustomHigh(x) ((x>>9)&0x1f)
-
-//Attenuator SPI address
-#define Att_RX 2
-#define Att_TX 3
-
 static uint8_t osc_FPGA_SetAttenuator(uint16_t Chan, float32_t att)
 {
     uint8_t tx_data[7];
@@ -483,6 +498,31 @@ static uint8_t osc_FPGA_SetAttenuator(uint16_t Chan, float32_t att)
     return retval;
 }
 
+/**
+ * @brief sets the aoutput attenuator according to required power percentage
+ * @param pf  the value of output power to set
+ */
+bool DDCboard_SetTXpower(float32_t pf)
+{
+    static float32_t oldPF=0;
+    float32_t oldPF_=oldPF;
+    bool power_changed=oldPF_!=pf;
+
+    if(power_changed)
+    {
+        float32_t newpwr=10*log10f(pf);
+        if(newpwr<-31.5)
+        {
+            newpwr=-31.5;
+        }
+
+        osc_FPGA_SetAttenuator(Att_TX,-newpwr);
+    }
+
+    oldPF=pf;   //store new value
+    return power_changed;
+}
+
 void osc_FPGA_DDC_Init()
 {
 	DDCboard.current_frequency = 0;
@@ -494,10 +534,12 @@ void osc_FPGA_DDC_Init()
 	if (DDCboard.is_present)
 	{
 		DDCboard_ConfigureSAI();
-		DDCboard_UpdateConfig(DDCboard_REG_CTRL_SAIen | DDCboard_REG_CTRL_AdcRes | DDCboard_REG_CTRL_AMP1 | DDCboard_REG_CTRL_LED2,ENABLE);   //enable MCLK, Reset ADC to default state
+		DDCboard_UpdateConfig(DDCboard_REG_CTRL_SAIen | DDCboard_REG_CTRL_AdcRes | DDCboard_REG_CTRL_AMP1 | DDCboard_REG_CTRL_LED2 | DDCboard_REG_CTRL_RevDAC,ENABLE);   //enable MCLK, Reset ADC to default state
 		DDCboard_UpdateConfig(DDCboard_REG_CTRL_AdcRes,DISABLE);
 
-		DDCboard_UpdateConfig(DDCboard_REG_CTRL_ADCFLTR_LPF | DDCboard_REG_CTRL_RXANT,ENABLE);
+		DDCboard_UpdateConfig(DDCboard_REG_CTRL_ADCFLTR_LPF | DDCboard_REG_CTRL_RXANT | DDCboard_REG_CTRL_TXANT,ENABLE);
+
+		//DDCboard_UpdateConfig(DDCboard_REG_CTRL_SAITEST,ENABLE);
 
 		osc_FPGA_SetAttenuator(Att_RX,0);
 		osc_FPGA_SetAttenuator(Att_TX,0);

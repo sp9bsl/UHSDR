@@ -35,5 +35,6 @@ typedef struct
 enum DDCboard_{DDCboard_OK=0,DDCboard_Fail};
 bool DDCboard_IsPresent(void);
 void osc_FPGA_DDC_Init();
+bool DDCboard_SetTXpower(float32_t pf);
 
 #endif /* UI_OSCILLATOR_OSC_FPGA_DDC_H_ */
