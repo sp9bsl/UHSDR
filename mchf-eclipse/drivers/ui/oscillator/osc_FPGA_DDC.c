@@ -19,6 +19,7 @@
 #include <math.h>
 #include "osc_FPGA_DDC.h"
 #include <spi.h>
+#include "uhsdr_hw_i2c.h"
 
 extern SAI_HandleTypeDef hsai_BlockA2;
 extern SAI_HandleTypeDef hsai_BlockB2;
@@ -27,8 +28,35 @@ extern DMA_HandleTypeDef hdma_sai2_b;
 
 #define FPGA_CS_PIN GPIO_PIN_13
 #define FPGA_CS_PORT GPIOC
-#define hspiFPGA (hspi6)
+#define hspiFPGA        (hspi6)
+#define SParkleBB_I2C   (&hi2c2)
 
+//SParkle Base Board I2C registers
+#define SParkleBB_I2C_adr1 0x40     //IC204
+    #define SParkleBB_I2C_adr1_LNA          (1<<0)     //LNA enable
+    #define SParkleBB_I2C_adr1_ANT          (1<<1)     //HF antenna switch
+    #define SParkleBB_I2C_adr1_AMP_EN1      (1<<2)     //HF amplifier enable
+    #define SParkleBB_I2C_adr1_AMP_EN2      (1<<3)     //VHF amplifier enable
+    #define SParkleBB_I2C_adr1_BND_all      (0<<4)     //all pas filter for band selection (exactly the low pass up to 6m)
+    #define SParkleBB_I2C_adr1_BND_6m       (1<<4)
+    #define SParkleBB_I2C_adr1_BND_160m     (2<<4)
+    #define SParkleBB_I2C_adr1_BND_60_40m   (3<<4)
+    #define SParkleBB_I2C_adr1_BND_12_10m   (4<<4)
+    #define SParkleBB_I2C_adr1_BND_30_20m   (5<<4)
+    #define SParkleBB_I2C_adr1_BND_80m      (6<<4)
+    #define SParkleBB_I2C_adr1_BND_17_15m   (7<<4)
+#define SParkleBB_I2C_adr2 0x42
+    #define SParkleBB_I2C_adr2_AMP_EN3      (1<<7)
+
+#define SParkle_AMPselHF 0
+#define SParkle_AMPselVHF 1
+
+#define PCA_9554_RegInput 0
+#define PCA_9554_RegOutput 1
+#define PCA_9554_RegPolarityInv 2
+#define PCA_9554_RegConfig 3
+
+//SPI registers of DDC board
 #define DDCboard_REG_STAT 0
 #define DDCboard_REG_CTRL 1
 	#define DDCboard_REG_CTRL_SAIen 	(1<<0)	//enable SAI outputs in FPGA
@@ -202,8 +230,22 @@ bool DDCboard_CheckPresence(void)
 	{
 		DDCboard.version_major=stat>>8;
 		DDCboard.version_minor=stat;
+
+        DDCboard.TestStatus&=~SParkleStat_BaseBoardPresent;
+        if(UhsdrHw_I2C_DeviceReady(SParkleBB_I2C,SParkleBB_I2C_adr1) == HAL_OK)
+        {
+            if(UhsdrHw_I2C_DeviceReady(SParkleBB_I2C,SParkleBB_I2C_adr2) == HAL_OK)
+            {
+                DDCboard.TestStatus|=SParkleStat_BaseBoardPresent;
+            }
+        }
+
+
 		return true;
 	}
+
+
+
 
 
 	return false;
@@ -356,6 +398,9 @@ static Oscillator_ResultCodes_t DDCboard_PrepareNextFrequency(uint32_t freq, int
 {
     //determining the Nyquist zone and set frequency to fit in 1st Nyquist zone
 
+    uint8_t next_ampSel=0;
+    uint8_t next_bandSel=SParkleBB_I2C_adr1_BND_all;
+
     if(freq>=(oscDDC_f_sample))
     {
         freq-=oscDDC_f_sample;
@@ -372,8 +417,59 @@ static Oscillator_ResultCodes_t DDCboard_PrepareNextFrequency(uint32_t freq, int
     {
         DDCboard.Nyquist_Zone=1;
         DDCboard.AntiAliasFilterSeting=DDCboard_REG_CTRL_ADCFLTR_LPF;
+        next_ampSel=SParkle_AMPselHF;
+
+        uint32_t dial_freq=freq-AudioDriver_GetTranslateFreq();
+        //prepare the selection of the right filter in filter board regarding of wanted frequency
+        if((dial_freq>=1810000) && (dial_freq<2000000))   //band 160m
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_160m;
+        }
+        else if((dial_freq>=3500000) && (dial_freq<3800000))   //band 80m
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_80m;
+        }
+        else if((dial_freq>=5100000) && (dial_freq<7200000))   //bands 60m..40m
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_60_40m;
+        }
+        else if((dial_freq>=10100000) && (dial_freq<14350000))   //bands 60m..40m
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_30_20m;
+        }
+        else if((dial_freq>=18000000) && (dial_freq<21450000))   //bands 17m..15m
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_17_15m;
+        }
+        else if((dial_freq>=24890000) && (dial_freq<29700000))   //bands 12m..10m
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_12_10m;
+        }
+        else if((dial_freq>=50000000) && (dial_freq<52000000))   //band6m
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_6m;
+        }
+        else
+        {
+            next_bandSel=SParkleBB_I2C_adr1_BND_all;  //default the low pass filter for 6m
+        }
+
+
     }
 
+
+    DDCboard.next_BB_reg1=next_bandSel;
+    DDCboard.next_BB_reg2&=~SParkleBB_I2C_adr2_AMP_EN3; //amp3 is future option, not used anywhere yet
+
+    switch(next_ampSel)
+    {
+        case SParkle_AMPselHF:
+            DDCboard.next_BB_reg1|=SParkleBB_I2C_adr1_AMP_EN1;
+            break;
+        case SParkle_AMPselVHF:
+            DDCboard.next_BB_reg1|=SParkleBB_I2C_adr1_AMP_EN2;
+            break;
+    }
 
     //CORDIC oscillator works by adding phase offset,
     //thus we need to recalculate the needed frequency to exact phase offset added by each edge of the sampling clock
@@ -387,6 +483,11 @@ static Oscillator_ResultCodes_t DDCboard_PrepareNextFrequency(uint32_t freq, int
 
 
 	return OSC_OK;
+}
+
+static uint16_t DDCboard_WriteBBRegister1(uint8_t reg, uint8_t val)
+{
+    return UhsdrHw_I2C_WriteRegister(SParkleBB_I2C, SParkleBB_I2C_adr1, reg, 1, val);
 }
 
 static Oscillator_ResultCodes_t DDCboard_ChangeToNextFrequency()
@@ -421,6 +522,11 @@ static Oscillator_ResultCodes_t DDCboard_ChangeToNextFrequency()
 	    DDCboard_UpdateConfig(DDCboard.AntiAliasFilterSeting,ENABLE);
 	}
 
+	if(DDCboard.current_BB_reg1!=DDCboard.next_BB_reg1)
+	{
+	    DDCboard.current_BB_reg1=DDCboard.next_BB_reg1;
+	    DDCboard_WriteBBRegister1(PCA_9554_RegOutput,DDCboard.current_BB_reg1);
+	}
 
 	return retval;
 }
@@ -527,6 +633,10 @@ void osc_FPGA_DDC_Init()
 {
 	DDCboard.current_frequency = 0;
 	DDCboard.next_frequency = 0;
+	DDCboard.next_BB_reg1=0;
+	DDCboard.next_BB_reg2=0;
+	DDCboard.current_BB_reg1=255;    //255 to trigger update of i2c expander
+    DDCboard.current_BB_reg2=255;    //255 to trigger update of i2c expander
 
 	DDCboard.is_present = DDCboard_CheckPresence();
 	DDCboard.RegConfig=DDCboard_REG_CTRL_AMP1;
@@ -551,6 +661,12 @@ void osc_FPGA_DDC_Init()
 
 		//DDCboard_writePeriphSPI(0x00010000|ADS6145_Reg_00|ADS6145_Reg_00_CoarseGainEnable); //gain set to 3dB
 		//DDCboard_writePeriphSPI(0x00010000|ADS6145_Reg_0c|ADS6145_Reg_0c_FineGain(6)); //gain set to 3dB
+
+
+		if(DDCboard.TestStatus&SParkleStat_BaseBoardPresent)
+		{
+		    DDCboard_WriteBBRegister1(PCA_9554_RegConfig,0);    //expander#1 setup all to outputs
+		}
 
 	}
 

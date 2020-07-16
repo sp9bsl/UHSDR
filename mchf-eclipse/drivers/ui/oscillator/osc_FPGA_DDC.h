@@ -24,13 +24,19 @@ typedef struct
 	uint8_t version_minor;
 	uint32_t current_frequency;
 	uint32_t next_frequency;
-	float32_t ppm;
+	uint8_t next_BB_reg1;
+    uint8_t next_BB_reg2;
+    uint8_t current_BB_reg1;
+    uint8_t current_BB_reg2;
+    float32_t ppm;
 	uint32_t RegConfig;
 	uint8_t Nyquist_Zone;       //number of Nyquist zone for current frequency
 	uint32_t AntiAliasFilterSeting;
 	uint32_t prevAntiAliasFilterSeting;
-
+    uint8_t TestStatus;
 }DDCboard_t;
+
+#define SParkleStat_BaseBoardPresent 0x01
 
 enum DDCboard_{DDCboard_OK=0,DDCboard_Fail};
 bool DDCboard_IsPresent(void);
