@@ -6400,14 +6400,19 @@ void UiAction_ChangeAudioSource()
 
 // TODO: Decide if we really want to switch
 // order like for the normal buttons
-void UiAction_ChangeBandDownOrUp()
+void UiAction_ChangeBandDownOrUp(void)
 {
 	UiDriver_HandleBandButtons(BUTTON_BNDM);
 }
 
-void UiAction_ChangeBandUpOrDown()
+void UiAction_ChangeBandUpOrDown(void)
 {
 	UiDriver_HandleBandButtons(BUTTON_BNDP);
+}
+
+void UiAction_Codec_RestartI2S(void)
+{
+    RFboard.CodecRestart();
 }
 
 static void UiAction_SaveConfigurationToMemory()
@@ -7481,7 +7486,8 @@ void UiDriver_TaskHandler_MainTasks()
 		RadioManagement_TxRxSwitching_Enable();
 		if (ts.twinpeaks_tested == TWINPEAKS_CODEC_RESTART)
 		{
-		    Codec_RestartI2S();
+		    //Codec_RestartI2S();
+		    RFboard.CodecRestart();
 		    ts.twinpeaks_tested = TWINPEAKS_WAIT;
 		}
         UiDriver_HandleUSB_Keyboard();

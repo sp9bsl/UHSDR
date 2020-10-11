@@ -2476,7 +2476,8 @@ void UiMenu_UpdateItem(uint16_t select, MenuProcessingMode_t mode, int pos, int 
         {
 
             UiMenu_DisplayValue("Restart",Red,pos);
-            Codec_RestartI2S();
+            //Codec_RestartI2S();
+            RFboard.CodecRestart();
             var = 0;
         }
         break;

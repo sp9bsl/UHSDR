@@ -290,10 +290,10 @@ const pa_info_t mchf_pa =
 static const power_level_desc_t SParkle_rf_power_levels[] =
 {
         { .id = PA_LEVEL_FULL,   .mW = 0,    }, // we use 0 to indicate max power
-        { .id = PA_LEVEL_HIGH,   .mW = 50000, },
-        { .id = PA_LEVEL_MEDIUM, .mW = 10000, },
-        { .id = PA_LEVEL_LOW,    .mW = 1000, },
-        { .id = PA_LEVEL_MINIMAL,.mW =  500, },
+        { .id = PA_LEVEL_HIGH,   .mW = 10000, },
+        { .id = PA_LEVEL_MEDIUM, .mW = 5000, },
+        { .id = PA_LEVEL_LOW,    .mW = 2000, },
+        { .id = PA_LEVEL_MINIMAL,.mW = 1000, },
 };
 
 const pa_power_levels_info_t SParkle_power_levelsInfo =
@@ -437,7 +437,12 @@ static bool RadioManagement_SetBandPowerFactor(const BandInfo* band, int32_t pow
     if(SParkle_IsPresent())
     {
         //TODO: make mixed amplitude/attenuator use, using only the 0.5dB steps from PE4302 causes inaccurate power settings
-        ts.tx_power_factor=TX_POWER_FACTOR_MAX_DUC_INTERNAL;   //because fpga doesn't have the limits of typical analog mixer and we always output full power from DAC
+        //ts.tx_power_factor=TX_POWER_FACTOR_MAX_DUC_INTERNAL;
+
+       /* ts.tx_power_factor =
+                (power_factor > TX_POWER_FACTOR_MAX_INTERNAL) ?
+                        TX_POWER_FACTOR_MAX_INTERNAL : power_factor;*/
+
         return SParkle_SetTXpower(power_factor);
     }
     else

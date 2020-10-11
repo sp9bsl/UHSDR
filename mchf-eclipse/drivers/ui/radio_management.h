@@ -131,14 +131,18 @@ extern const pa_info_t mchf_pa;
 
 //definition of specific RF hardware features
 typedef int8_t (*hRFb_RXATT)(void);
+typedef void (*hRFb_CodecRestart)(void);
 
 typedef struct {
-    hRFb_RXATT AMP_ATT_prev;
-    hRFb_RXATT AMP_ATT_next;
-    hRFb_RXATT AMP_ATT_getCurrent;
+    hRFb_RXATT AMP_ATT_prev;            //attenuator/amplifier control - previous (lower) setting
+    hRFb_RXATT AMP_ATT_next;            //attenuator/amplifier control - next (higher) setting
+    hRFb_RXATT AMP_ATT_getCurrent;      //attenuator/amplifier control - get current setting
 
-    const pa_power_levels_info_t* power_levelsInfo;
-    const pa_info_t* pa_info;
+    hRFb_CodecRestart CodecRestart;     //codec restart (for twin peaks resolving)
+
+    const pa_power_levels_info_t* power_levelsInfo; //power table for PA
+    const pa_info_t* pa_info;                       //info for PA
+
 } HardwareRFBoard;
 
 extern __IO HardwareRFBoard RFboard;

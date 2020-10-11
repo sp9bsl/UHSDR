@@ -328,6 +328,8 @@ void TransceiverStateInit(void)
     RFboard.AMP_ATT_prev=NULL;
 
     RadioManagement_Init_RFboardPA();
+
+    RFboard.CodecRestart=Codec_RestartI2S;
 }
 
 // #include "Trace.h"

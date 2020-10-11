@@ -16,6 +16,7 @@
 #include <math.h>
 #include "osc_SParkle.h"
 #include "radio_management.h"
+#include "sai.h"
 
 SParkleState_t SParkleState;
 #ifdef USE_OSC_SParkle
@@ -23,8 +24,13 @@ SParkleState_t SParkleState;
 #include <spi.h>
 #include "uhsdr_hw_i2c.h"
 
+
+extern SAI_HandleTypeDef hsai_BlockA1;
+extern SAI_HandleTypeDef hsai_BlockB1;
 extern SAI_HandleTypeDef hsai_BlockA2;
 extern SAI_HandleTypeDef hsai_BlockB2;
+extern DMA_HandleTypeDef hdma_sai1_a;
+extern DMA_HandleTypeDef hdma_sai1_b;
 extern DMA_HandleTypeDef hdma_sai2_a;
 extern DMA_HandleTypeDef hdma_sai2_b;
 
@@ -263,9 +269,21 @@ bool SParkle_CheckPresence(void)
 
 //Reconfiguration of peripherals for DDC board usage
 //this is necessary to keep compatibility with "conventional" analog RF boards.
-//The main difference is that the source of I2S(SAI) clock is provided by FPGA board as the source of RF signal.
+//The main difference is that the source of I2S(SAI) clock is provided by FPGA board as the source of RF signal and the SAI2 works in 32 bit mode
 static void SParkle_ConfigureSAI(void)
 {
+
+    HAL_DMA_DeInit(&hdma_sai1_a);
+    HAL_DMA_DeInit(&hdma_sai1_b);
+    HAL_DMA_DeInit(&hdma_sai2_a);
+    HAL_DMA_DeInit(&hdma_sai2_b);
+
+    HAL_SAI_DeInit(&hsai_BlockA1);
+    HAL_SAI_DeInit(&hsai_BlockB1);
+    HAL_SAI_DeInit(&hsai_BlockA2);
+    HAL_SAI_DeInit(&hsai_BlockB2);
+
+
     GPIO_InitTypeDef GPIO_InitStruct;
 
     /**SAI2_B_Block_B GPIO Configuration
@@ -383,6 +401,21 @@ static void SParkle_ConfigureSAI(void)
     {
         Error_Handler();
     }
+
+    //the codec SAI remains unchanged
+
+    MX_SAI1_Init();
+
+    if (HAL_DMA_Init(&hdma_sai1_a) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    if (HAL_DMA_Init(&hdma_sai1_b) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
 }
 
 static void SParkle_SetPPM(float32_t ppm)
@@ -515,7 +548,7 @@ static Oscillator_ResultCodes_t SParkle_DDCboard_ChangeToNextFrequency()
             SParkleState.DDC_RegConfig&=~DDCboard_REG_CTRL_RCV1revIQ;
         }
 
-        if(SParkleState.Nyquist_Zone==3)
+        if(SParkleState.Nyquist_Zone!=1)
         {
             SParkleState.DDC_RegConfig&=~DDCboard_REG_CTRL_AttDAC;  //full power on dac for 2m (attenuation compensation for 3rd nyquist zone)
         }
@@ -610,7 +643,7 @@ static uint8_t SParkle_SetAttenuator(uint16_t Chan, float32_t att)
 }
 
 /**
- * @brief sets the output attenuator according to required power percentage
+ * @brief sets the output attenuator and if needed signal level according to required power percentage. The goal is to set maximum level output signal and use PE4302 attenuator
  * @param pf  the value of output power to set
  */
 bool SParkle_SetTXpower(float32_t pf)
@@ -618,16 +651,31 @@ bool SParkle_SetTXpower(float32_t pf)
     static float32_t oldPF=0;
     float32_t oldPF_=oldPF;
     bool power_changed=oldPF_!=pf;
+    float32_t correction=0;
+    float32_t att_value=0;
 
     if(power_changed)
     {
-        float32_t newpwr=10*log10f(pf);
+        float32_t newpwr=20*log10f((pf)/TX_POWER_FACTOR_MAX_DUC_INTERNAL);    //calculate the attenuation in dB from linear input
         if(newpwr<-31.5)
         {
-            newpwr=-31.5;
+            //the wanted level is lower than possible to set with PE4302 so, set the maximum value of attenuator and calculate remaining attenuation by signal level change
+            att_value=31.5;
         }
+        else
+        {
+            //find the fraction lower than 0.5dB to adjust tx_power_factor.
+            //The reason is to make more than 0.5 dB precision in adjustment of power. PE4302 has 0.5dB steps.
+            correction=newpwr/0.5;
+            int32_t steps=(int)correction; // cut off the fractional part
+            att_value=-0.5*steps;          // calculate new attenuation valuse with PE4302 resolution
+         }
+        correction=newpwr+att_value;      //add the attenuation of PE4302
+        correction=pow10f(correction/20); //recalculate to linear
+        correction*=TX_POWER_FACTOR_MAX_DUC_INTERNAL;
+        ts.tx_power_factor =correction;
 
-        SParkle_SetAttenuator(Att_TX,-newpwr);
+        SParkle_SetAttenuator(Att_TX,att_value);
     }
 
     oldPF=pf;   //store new value
@@ -719,6 +767,18 @@ void SParkle_SetDacType(bool DacType)
     }
 
 }
+/**
+ * @brief reset of FPGA I2S, a way to handle SAI problem with twin peaks.
+ *
+ */
+void osc_SParkle_RestartI2S(void)
+{
+    //I've tested that disconnecting and connecting the I2S (fpga state untouched) solves the issue, so this is SAI/firmware "feature". 11.10.2020 SP9BSL
+
+    SParkle_UpdateConfig(DDCboard_REG_CTRL_SAIen,DISABLE);    //triggering the I2S state machine to reset (and disable the I2S output for a while)
+    SParkle_UpdateConfig(DDCboard_REG_CTRL_SAIen,ENABLE);
+}
+
 //this raoutine is called after eeprom read
 void SParkle_ConfigurationInit(void)
 {
@@ -745,6 +805,8 @@ void osc_SParkle_Init(void)
         RFboard.AMP_ATT_next=osc_SParkle_ATTsetNext;
         RFboard.AMP_ATT_prev=osc_SParkle_ATTsetPrev;
         RadioManagement_Init_SParklePA();
+
+        RFboard.CodecRestart=osc_SParkle_RestartI2S;
 
         SParkle_ConfigureSAI();
         SParkle_UpdateConfig(DDCboard_REG_CTRL_SAIen | DDCboard_REG_CTRL_AdcRes | DDCboard_REG_CTRL_AMP1 | DDCboard_REG_CTRL_LED2,ENABLE);   //enable MCLK, Reset ADC to default state
@@ -774,7 +836,7 @@ void osc_SParkle_Init(void)
         ts.DisableTCXOdisplay=1;    //disable the tcxo field in layout
         SParkleState.RX_amp_idx=att_off;
         ts.ATT_Gain=att_table[SParkleState.RX_amp_idx];  //enable display of attenuation/amplification control
-        ts.TX_at_zeroIF=1;      //DUC input interpolating FIR filter has roll off around 12kHz causing -12kHz USB and +12kHz LSB not being transmitted, so there is a must for transmit at zero if
+        //ts.TX_at_zeroIF=1;      //DUC input interpolating FIR filter has roll off around 12kHz causing -12kHz USB and +12kHz LSB not being transmitted, so there is a must for transmit at zero if
                                 //TODO: proof that FM/SAM transmit works as expected
 
     }
