@@ -16,14 +16,14 @@
 #include <math.h>
 #include "osc_SParkle.h"
 #include "radio_management.h"
-#include "sai.h"
+
 
 SParkleState_t SParkleState;
 #ifdef USE_OSC_SParkle
 
 #include <spi.h>
 #include "uhsdr_hw_i2c.h"
-
+#include "sai.h"
 
 extern SAI_HandleTypeDef hsai_BlockA1;
 extern SAI_HandleTypeDef hsai_BlockB1;
