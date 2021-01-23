@@ -7573,6 +7573,10 @@ void UiDriver_TaskHandler_MainTasks()
 					char str[20];
 					snprintf(str,20,"%2u:%02u:%02u",sTime.Hours,sTime.Minutes,sTime.Seconds);
 					UiLcdHy28_PrintText(ts.Layout->RTC_IND.x, ts.Layout->RTC_IND.y, str, White, Black, 0);
+#ifdef SParkle_hardwareDebug
+					snprintf(str,20,"%X %X",(unsigned int)SParkleState.test_RXPatternL,(unsigned int)SParkleState.test_RXPatternR);
+					UiLcdHy28_PrintText(ts.Layout->PWR_NUM_IND.x, ts.Layout->PWR_NUM_IND.y,str,Green,Black,0);
+#endif
 				}
 			}
 			break;

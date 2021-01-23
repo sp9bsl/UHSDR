@@ -41,12 +41,17 @@ typedef struct
     uint8_t TestStatus;
     uint8_t RX_amp_idx;
     uint8_t current_RX_amp_idx;
+    uint32_t test_RXPatternL;
+    uint32_t test_RXPatternR;
 #endif
 }SParkleState_t;
 
 extern SParkleState_t SParkleState;
 
 #ifdef USE_OSC_SParkle
+
+//#define SParkle_hardwareDebug       //for hardware I2S check
+
 #define oscDDC_f_sample 122880000
 #define SParkleStat_BaseBoardPresent 0x01
 
@@ -60,6 +65,7 @@ bool SParkle_SetTXpower(float32_t pf);
 void SParkle_SetDacType(bool DacType);
 bool SParkle_GetDacType(void);
 void SParkle_ConfigurationInit(void);
+void SParkle_HardwareTestRXCallback(IqSample_t *iq);
 #endif
 
 #endif /* UI_OSCILLATOR_OSC_SPARKLE_H_ */

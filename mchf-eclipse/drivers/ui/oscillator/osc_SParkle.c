@@ -786,6 +786,12 @@ void SParkle_ConfigurationInit(void)
     SParkleState.EEPROM_Flags&=EEPROM_SParkleFLAGS_MASK;
 }
 
+void SParkle_HardwareTestRXCallback(IqSample_t *iq)
+{
+    SParkleState.test_RXPatternL=iq->l;
+    SParkleState.test_RXPatternR=iq->r;
+}
+
 void osc_SParkle_Init(void)
 {
     SParkleState.current_frequency = 0;
@@ -814,12 +820,14 @@ void osc_SParkle_Init(void)
 
         SParkle_UpdateConfig(DDCboard_REG_CTRL_ADCFLTR_LPF | DDCboard_REG_CTRL_RXANT | DDCboard_REG_CTRL_TXANT,ENABLE);
 
-        //DDCboard_UpdateConfig(DDCboard_REG_CTRL_SAITEST,ENABLE);
+#ifdef SParkle_hardwareDebug
+        SParkle_UpdateConfig(DDCboard_REG_CTRL_SAITEST,ENABLE);
+#endif
 
         SParkle_SetAttenuator(Att_RX,0);
         SParkle_SetAttenuator(Att_TX,0);
 
-        //DDCboard_writePeriphSPI(0x00010000|ADS6145_Reg_0a|ADS6145_Reg_0a_TestPattern(4)); //increment for every cycle (for pin soldering test)
+        //SP_DDCboard_writePeriphSPI(0x00010000|ADS6145_Reg_0a|ADS6145_Reg_0a_TestPattern(4)); //increment for every cycle (for pin soldering test)
 
 
         //disabled for future optional usage of ADC internal gain setting

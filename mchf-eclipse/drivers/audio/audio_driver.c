@@ -2972,6 +2972,11 @@ void AudioDriver_I2SCallback(AudioSample_t *audio, IqSample_t *iq, AudioSample_t
 
     if((ts.txrx_mode == TRX_MODE_RX))
     {
+
+#ifdef SParkle_hardwareDebug
+        SParkle_HardwareTestRXCallback(iq);
+#endif
+
         if((to_rx) || ts.audio_processor_input_mute_counter > 0)	 	// the first time back to RX, clear the buffers to reduce the "crash"
         {
             muted = true;
