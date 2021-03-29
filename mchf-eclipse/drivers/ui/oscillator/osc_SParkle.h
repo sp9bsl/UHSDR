@@ -65,6 +65,7 @@ bool osc_SParkle_EnableTx(void);
 bool osc_SParkle_EnableRx(void);
 bool osc_SParkle_PrepareTx(void);
 bool osc_SParkle_PrepareRx(void);
+bool oscSParkleRunTest(bool state);
 #endif
 
 #endif /* UI_OSCILLATOR_OSC_SPARKLE_H_ */

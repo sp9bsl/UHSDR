@@ -55,6 +55,7 @@ extern DMA_HandleTypeDef hdma_sai2_b;
     #define SParkleBB_I2C_adr1_BND_30_20m   (5<<4)
     #define SParkleBB_I2C_adr1_BND_80m      (6<<4)
     #define SParkleBB_I2C_adr1_BND_17_15m   (7<<4)
+    #define SParkleBB_I2C_adr1_BND_msk      (7<<4)
 #define SParkleBB_I2C_adr2 0x42
     #define SParkleBB_I2C_adr2_AMP_EN3      (1<<7)
 
@@ -451,12 +452,14 @@ static Oscillator_ResultCodes_t SParkle_DDCboard_PrepareNextFrequency(uint32_t f
         freq-=oscDDC_f_sample;
         SParkleState.Nyquist_Zone=3;
         SParkleState.AntiAliasFilterSeting=DDCboard_REG_CTRL_ADCFLTR_2mBPF;
+        next_ampSel=SParkle_AMPselVHF;
     }
     else if(freq>=(oscDDC_f_sample/2))
     {
         freq=oscDDC_f_sample/2-(freq-oscDDC_f_sample/2);
         SParkleState.Nyquist_Zone=2;
         SParkleState.AntiAliasFilterSeting=DDCboard_REG_CTRL_ADCFLTR_4mBPF;
+        next_ampSel=SParkle_AMPselVHF;
     }
     else
     {
@@ -502,9 +505,10 @@ static Oscillator_ResultCodes_t SParkle_DDCboard_PrepareNextFrequency(uint32_t f
 
     }
 
+    SParkleState.next_BB_reg1&=~(SParkleBB_I2C_adr1_BND_msk | SParkleBB_I2C_adr1_AMP_EN1 | SParkleBB_I2C_adr1_AMP_EN2);     //clearing all bits which can be set by this routine
+    SParkleState.next_BB_reg1|=next_bandSel;
 
-    SParkleState.next_BB_reg1=next_bandSel;
-    SParkleState.next_BB_reg2&=~SParkleBB_I2C_adr2_AMP_EN3; //amp3 is future option, not used anywhere yet
+    SParkleState.next_BB_reg2&=~SParkleBB_I2C_adr2_AMP_EN3; //amp3 is future option, yet not used
 
     switch(next_ampSel)
     {
@@ -809,8 +813,15 @@ bool  SParkle_ConfigurationInit(void)
     return true;
 }
 
+bool oscSParkleRunTest(bool state)
+{
+    SParkle_UpdateConfig(DDCboard_REG_CTRL_SAITEST,state);
+    return true;
+}
+
 bool osc_SParkle_Init(void)
 {
+    SParkleState.EEPROM_Flags=EEPROM_SParkleFLAG_DACtype;   //temporary fix for not proper eeprom read during startup TODO: REMOVE THIS!!
     SParkleState.current_frequency = 0;
     SParkleState.next_frequency = 0;
     SParkleState.next_BB_reg1=0;
@@ -837,7 +848,7 @@ bool osc_SParkle_Init(void)
 
         SParkle_UpdateConfig(DDCboard_REG_CTRL_ADCFLTR_LPF | DDCboard_REG_CTRL_RXANT | DDCboard_REG_CTRL_TXANT,ENABLE);
 
-        //DDCboard_UpdateConfig(DDCboard_REG_CTRL_SAITEST,ENABLE);
+
 
         SParkle_SetAttenuator(Att_RX,0);
         SParkle_SetAttenuator(Att_TX,0);

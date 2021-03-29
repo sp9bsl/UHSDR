@@ -4299,6 +4299,8 @@ void UiMenu_UpdateItem(uint16_t select, MenuProcessingMode_t mode, int pos, int 
         {
             // reset this to default state
             Board_RedLed(LED_STATE_OFF);
+
+            oscSParkleRunTest(ts.debug_i2s_iq);
         }
         break;
 

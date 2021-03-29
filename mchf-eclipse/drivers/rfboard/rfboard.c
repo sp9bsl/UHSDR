@@ -82,9 +82,9 @@ const pa_info_t mchf_pa =
 static const power_level_desc_t SParkle_rf_power_levels[] =
 {
         { .id = PA_LEVEL_FULL,   .mW = 0,    }, // we use 0 to indicate max power
-        { .id = PA_LEVEL_HIGH,   .mW = 10000, },
-        { .id = PA_LEVEL_MEDIUM, .mW = 5000, },
-        { .id = PA_LEVEL_LOW,    .mW = 2000, },
+        { .id = PA_LEVEL_HIGH,   .mW = 20000, },
+        { .id = PA_LEVEL_MEDIUM, .mW = 10000, },
+        { .id = PA_LEVEL_LOW,    .mW = 5000, },
         { .id = PA_LEVEL_MINIMAL,.mW = 1000, },
 };
 
@@ -98,7 +98,7 @@ const pa_power_levels_info_t SParkle_power_levelsInfo =
 const pa_info_t SParkle_pa =
 {
         .name  = "SParkle PA",
-        .reference_power = 10000.0,
+        .reference_power = 20000.0,
         .max_freq = 150000000,
         .min_freq =  1800000,
         .max_am_power = 25000,
