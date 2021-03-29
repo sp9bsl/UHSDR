@@ -466,6 +466,11 @@ static const RegisterValueSetInfo_t ili9486_regs =
     ili9486, sizeof(ili9486)/sizeof(RegisterValue_t)
 };
 
+static const RegisterValueSetInfo_t ST7796_regs =
+{
+    ili9486, sizeof(ili9486)/sizeof(RegisterValue_t)
+};
+
 #endif
 
 static void UiLcd_BacklightInit()
@@ -1176,6 +1181,33 @@ static unsigned short UiLcdHy28_ReadRegILI(uint16_t LCD_Reg)
     return retval;
 }
 
+#ifdef USE_GFX_ST7796
+static uint16_t UiLcdHy28_ReadDisplayId_ST7796()
+{
+    uint16_t retval = 0x7796;
+
+#ifdef USE_DISPLAY_PAR
+    // we can't read the id from SPI if it is the dumb RPi SPI
+    if (mchf_display.use_spi == false)
+    {
+        retval = UiLcdHy28_ReadReg(0xd3);
+        retval = LCD_RAM;    //first dummy read
+        retval = (LCD_RAM&0xff)<<8;
+        retval |=LCD_RAM&0xff;
+    }
+#endif
+    switch (retval)
+    {
+    case 0x7796:    //ST7796
+        mchf_display.reg_info  = &ST7796_regs;
+        break;
+    default:
+        retval = 0;
+    }
+    return retval;
+}
+#endif
+
 #ifdef USE_GFX_ILI9486
 
 static uint16_t UiLcdHy28_ReadDisplayId_ILI9486()
@@ -1359,6 +1391,20 @@ const uhsdr_display_info_t display_infos[] = {
 				.DrawStraightLine = UiLcdHy28_DrawStraightLine_Generic,
 				.DrawFullRect = UiLcdHy28_DrawFullRect_Generic,
 				.DrawColorPoint = UiLcdHy28_DrawColorPoint_Generic,
+        },
+#endif
+#ifdef USE_GFX_ST7796
+        {       //this display has the same registers and functions as ILI9486, the only difference is controller ID
+                DISPLAY_ST7796_PARALLEL, "ST7796 Para.",
+                .ReadDisplayId = UiLcdHy28_ReadDisplayId_ST7796,
+                .SetActiveWindow = UiLcdHy28_SetActiveWindow_ILI9486,
+                .SetCursorA = UiLcdHy28_SetCursorA_ILI9486,
+                .WriteRAM_Prepare = UiLcdHy28_WriteRAM_Prepare_ILI9486,
+                .WriteReg = UiLcdHy28_WriteReg_ILI,
+                .ReadReg = UiLcdHy28_ReadRegILI,
+                .DrawStraightLine = UiLcdHy28_DrawStraightLine_ILI,
+                .DrawFullRect = UiLcdHy28_DrawFullRect_ILI,
+                .DrawColorPoint = UiLcdHy28_DrawColorPoint_ILI,
         },
 #endif
 #ifdef USE_GFX_ILI932x
@@ -1636,6 +1682,7 @@ uint8_t UiLcd_Init()
     	break;
     case 0x9486:
     case 0x9488:
+    case 0x7796:
     	ts.Layout=&LcdLayouts[LcdLayout_480x320];
     	disp_resolution=RESOLUTION_480_320;
     	break;

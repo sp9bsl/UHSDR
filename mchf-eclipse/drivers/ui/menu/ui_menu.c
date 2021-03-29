@@ -513,6 +513,10 @@ const char* UiMenu_GetSystemInfo(uint32_t* m_clr_ptr, int info_item)
     	{
     		snprintf(out,32,"RA%04x",ts.display->DeviceCode);
     	}
+        else if(ts.display->DeviceCode==0x7796)
+        {
+            snprintf(out,32,"ST%04x",ts.display->DeviceCode);
+        }
     	else
     	{
     		snprintf(out,32,"ILI%04x",ts.display->DeviceCode);
