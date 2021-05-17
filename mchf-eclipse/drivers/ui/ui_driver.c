@@ -5788,7 +5788,7 @@ void UiDriver_StartUpScreenInit()
 	    desc.creator = RFboard.description->creator != NULL? RFboard.description->creator : desc.creator;
 	}
 
-	snprintf(tx,100,"%s",DEVICE_STRING);
+	snprintf(tx,100,"%s",desc.name);
 	nextY = UiLcdDraw_PrintTextCentered(ts.Layout->StartUpScreen_START.x, nextY, 320, tx, Cyan, Black, 1);
 
 	if (strcmp(TRX_HW_LIC,desc.license) == 0)

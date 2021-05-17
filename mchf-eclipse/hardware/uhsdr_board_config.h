@@ -228,6 +228,8 @@
     #define DEFAULT_MEMORY_FREQ (1240000000)
 #endif
 
+#define IQ_SAMPLE_RATE (48000)  //temporary, TODO:REMOVE THIS LINE after fpga modification to 192ksps !!!
+
 // for now: These are fixed.
 #ifndef IQ_SAMPLE_RATE
     #ifdef UI_BRD_MCHF

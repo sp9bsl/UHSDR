@@ -1190,7 +1190,7 @@ static uint16_t UiLcdHy28_ReadDisplayId_ST7796()
     // we can't read the id from SPI if it is the dumb RPi SPI
     if (mchf_display.use_spi == false)
     {
-        retval = UiLcdHy28_ReadReg(0xd3);
+        retval = UiLcdHy28_ReadRegILI(0xd3);
         retval = LCD_RAM;    //first dummy read
         retval = (LCD_RAM&0xff)<<8;
         retval |=LCD_RAM&0xff;
@@ -1400,11 +1400,11 @@ const uhsdr_display_info_t display_infos[] = {
                 .SetActiveWindow = UiLcdHy28_SetActiveWindow_ILI9486,
                 .SetCursorA = UiLcdHy28_SetCursorA_ILI9486,
                 .WriteRAM_Prepare = UiLcdHy28_WriteRAM_Prepare_ILI9486,
-                .WriteReg = UiLcdHy28_WriteReg_ILI,
+                .WriteReg = UiLcdHy28_WriteReg_ILI_PAR,
                 .ReadReg = UiLcdHy28_ReadRegILI,
-                .DrawStraightLine = UiLcdHy28_DrawStraightLine_ILI,
-                .DrawFullRect = UiLcdHy28_DrawFullRect_ILI,
-                .DrawColorPoint = UiLcdHy28_DrawColorPoint_ILI,
+                .DrawStraightLine = UiLcdHy28_DrawStraightLine_Generic,
+                .DrawFullRect = UiLcdHy28_DrawFullRect_Generic,
+                .DrawColorPoint = UiLcdHy28_DrawColorPoint_Generic,
         },
 #endif
 #ifdef USE_GFX_ILI932x
